@@ -8,10 +8,21 @@
 
 #include <opencv2/highgui/highgui.hpp> //To use uchar
 
-using namespace std;
-using cmplxDouble = complex<double>;
 
 #include <thrust/complex.h>
+
+#include <opencv2/core.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/highgui.hpp>
+
+#include <chrono>
+#include <iostream>
+
+using namespace std::chrono;
+
+using namespace std;
+using cmplxDouble = complex<double>;
 /*
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
@@ -79,9 +90,16 @@ __global__ void myKernel
 
         uchar grey = MandelbrotIteration(z, iter, thresh, degree);
 
+        grey = 255 - grey;
+
+        if (grey == 255)
+            grey = 0;
+
         //uchar grey = i;
 
         //los floats se convierten en uchar de forma implicita.
+
+
         image[idx] = grey; //Blue
         image[idx + 1] = grey; //Green
         image[idx + 2] = grey; //Red
@@ -165,11 +183,22 @@ cudaError_t mandelbrotWithCuda(
     dim3 threads(16, 16); // = 256 pixels
     dim3 blocks(ceil((float)width / (float)threads.x), ceil((float)height / (float)threads.y));
 
+    // Recording the timestamp at the start of the code
+    auto beg = high_resolution_clock::now();
+
     // Launch a kernel on the GPU with one thread for each element.
     myKernel <<<blocks, threads>>>
     (
         img_dev, width, height, deltaX, deltaY, Xmin, Ymin, iter, thresh, degree
     );
+
+    // Taking a timestamp after the code is ran
+    auto end = high_resolution_clock::now();
+
+    auto duration = duration_cast<milliseconds>(end - beg);
+
+    // Displaying the elapsed time
+    std::cout << "Elapsed Time: " << duration.count();
 
     // Check for any errors launching the kernel
     cudaStatus = cudaGetLastError();
@@ -199,7 +228,11 @@ cudaError_t mandelbrotWithCuda(
     cudaMemcpy(frame.data, img_dev, pixelSize * sizeof(uchar) * 3, cudaMemcpyDeviceToHost);
     //cudaMemcpy(frame.ptr(), img_dev, pixelSize * sizeof(uchar) * 3, cudaMemcpyDeviceToHost); //alternative
 
-    cv::imshow("salida", frame);
+    cv::Mat img_color;
+
+    cv::applyColorMap(frame, img_color, cv::COLORMAP_HOT);
+
+    cv::imshow("salida", img_color);
 
     cv::waitKey(0);
 
