@@ -120,6 +120,20 @@ int main()
 
     float degree = 2;
 
+
+
+    //Test parameters
+    M = 1080; M *= 0.9;
+    N = M;
+
+    Ymin =  0.00050;
+    Ymax =  0.00600;
+    Xmin = -1.77890;
+
+    iter = 300; thresh = 2;
+
+
+
     // Add vectors in parallel.
     cudaError_t cudaStatus = mandelbrotWithCuda(N, M, Ymin, Ymax, Xmin, iter, thresh, degree);
     if (cudaStatus != cudaSuccess) {
@@ -146,6 +160,10 @@ cudaError_t mandelbrotWithCuda(
     float degree
 )
 {
+    double Yaux = Ymin; //This mirrors the image in the y axis
+    Ymin = -Ymax;
+    Ymax = -Yaux;
+
     int pixelSize = width * height;
     
     double ratio = (double)width / (double)height;
@@ -192,14 +210,6 @@ cudaError_t mandelbrotWithCuda(
         img_dev, width, height, deltaX, deltaY, Xmin, Ymin, iter, thresh, degree
     );
 
-    // Taking a timestamp after the code is ran
-    auto end = high_resolution_clock::now();
-
-    auto duration = duration_cast<milliseconds>(end - beg);
-
-    // Displaying the elapsed time
-    std::cout << "Elapsed Time: " << duration.count();
-
     // Check for any errors launching the kernel
     cudaStatus = cudaGetLastError();
     if (cudaStatus != cudaSuccess) {
@@ -220,6 +230,15 @@ cudaError_t mandelbrotWithCuda(
     {
         fprintf(stderr, "\nSUCCESS in cudaDeviceSynchronize\n\n");
     }
+
+    // Taking a timestamp after the code is ran
+    auto end = high_resolution_clock::now();
+
+    auto duration = duration_cast<milliseconds>(end - beg);
+
+    // Displaying the elapsed time
+    std::cout << "\nElapsed Time: " << duration.count() << " miliseconds.\n\n\n";
+
 
     //openCV image. Use CV_8U if it's in grayscale
     cv::Mat frame = cv::Mat(cv::Size(width, height), CV_8UC3); 
