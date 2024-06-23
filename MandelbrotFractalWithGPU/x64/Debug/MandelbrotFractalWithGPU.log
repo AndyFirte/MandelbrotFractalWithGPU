@@ -1,14 +1,14 @@
 ﻿  Compiling CUDA source file kernel.cu...
   
   D:\Git\MandelbrotFractalWithGPU\MandelbrotFractalWithGPU>"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.2\bin\nvcc.exe" -gencode=arch=compute_52,code=\"sm_52,compute_52\" --use-local-env -ccbin "D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.37.32822\bin\HostX64\x64" -x cu   -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.2\include" -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.2\include"  -G   --keep-dir x64\Debug  -maxrregcount=0   --machine 64 --compile -cudart static  -g  -DWIN32 -DWIN64 -D_DEBUG -D_CONSOLE -D_MBCS -Xcompiler "/EHsc /W3 /nologo /Od /FS /Zi /RTC1 /MDd " -Xcompiler "/Fdx64\Debug\vc143.pdb" -o D:\Git\MandelbrotFractalWithGPU\MandelbrotFractalWithGPU\x64\Debug\kernel.cu.obj "D:\Git\MandelbrotFractalWithGPU\MandelbrotFractalWithGPU\kernel.cu" 
-D:\Git\MandelbrotFractalWithGPU\MandelbrotFractalWithGPU\kernel.cu(43): warning #177-D: variable "pixelSize" was declared but never referenced
-        int pixelSize = width * height;
-            ^
-  
-  Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
-  
   kernel.cu
-  tmpxft_000052a0_00000000-7_kernel.cudafe1.cpp
-D:\Git\MandelbrotFractalWithGPU\MandelbrotFractalWithGPU\kernel.cu(94): warning C4244: 'argumento': conversión de 'float' a 'unsigned int'; posible pérdida de datos
-D:\Git\MandelbrotFractalWithGPU\MandelbrotFractalWithGPU\kernel.cu(94): warning C4244: 'argumento': conversión de 'float' a 'unsigned int'; posible pérdida de datos
+  tmpxft_00005b44_00000000-7_kernel.cudafe1.cpp
+D:\Git\MandelbrotFractalWithGPU\MandelbrotFractalWithGPU\kernel.cu(94): warning C4244: 'inicializando': conversión de 'double' a 'int'; posible pérdida de datos
+D:\Git\MandelbrotFractalWithGPU\MandelbrotFractalWithGPU\kernel.cu(94): warning C4244: 'inicializando': conversión de 'double' a 'int'; posible pérdida de datos
+D:\Git\MandelbrotFractalWithGPU\MandelbrotFractalWithGPU\kernel.cu(106): warning C4244: 'argumento': conversión de 'float' a 'int'; posible pérdida de datos
+D:\Git\MandelbrotFractalWithGPU\MandelbrotFractalWithGPU\kernel.cu(166): warning C4244: 'argumento': conversión de 'float' a 'unsigned int'; posible pérdida de datos
+D:\Git\MandelbrotFractalWithGPU\MandelbrotFractalWithGPU\kernel.cu(166): warning C4244: 'argumento': conversión de 'float' a 'unsigned int'; posible pérdida de datos
+D:\Git\MandelbrotFractalWithGPU\MandelbrotFractalWithGPU\kernel.cu(169): warning C4244: 'argumento': conversión de 'int' a 'float'; posible pérdida de datos
+     Creando biblioteca D:\Git\MandelbrotFractalWithGPU\x64\Debug\MandelbrotFractalWithGPU.lib y objeto D:\Git\MandelbrotFractalWithGPU\x64\Debug\MandelbrotFractalWithGPU.exp
+LINK : warning LNK4098: la biblioteca predeterminada'LIBCMT' entra en conflicto con otras bibliotecas; use la biblioteca /NODEFAULTLIB:biblioteca
   MandelbrotFractalWithGPU.vcxproj -> D:\Git\MandelbrotFractalWithGPU\x64\Debug\MandelbrotFractalWithGPU.exe

@@ -4,7 +4,14 @@
 
 #include <stdio.h>
 
+#include <complex>
+
 #include <opencv2/highgui/highgui.hpp> //To use uchar
+
+using namespace std;
+using cmplxDouble = complex<double>;
+
+#include <thrust/complex.h>
 /*
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
@@ -16,9 +23,44 @@
 #include <iostream>
 */
 
-cudaError_t addWithCuda(int width, int height);
 
-__global__ void myKernel(int width, int height, uchar* image)
+cudaError_t mandelbrotWithCuda
+(
+    int width, int height,
+    double Ymin, double Ymax, double Xmin,
+    int iter, int thresh,
+    float degree
+);
+
+__device__ uchar MandelbrotIteration(thrust::complex<double> C, int iterations, float thresh, float degree)
+{
+    uchar greyLevel;
+    thrust::complex<double> Zn = C;
+
+    for (int i = 1; i <= iterations; i++)
+    {
+        Zn = Zn;
+        Zn = pow(Zn, degree) + C;
+        double magnitude_squared = norm(Zn); // squared magnitude of Zn
+        if (magnitude_squared > thresh * thresh)
+        {
+            greyLevel = static_cast<uchar>(floor(255.0 - (255.0 * (i - 1) / iterations)));
+            return greyLevel;
+        }
+        /*
+        */
+    }
+    return 0;
+}
+
+__global__ void myKernel
+(
+    uchar* image, 
+    int width, int height, 
+    double deltaX, double deltaY,
+    double Xmin, double Ymin,
+    int iter, float thresh, float degree
+)
 {
 	//columna
 	int i = blockDim.x * blockIdx.x + threadIdx.x;
@@ -30,22 +72,40 @@ __global__ void myKernel(int width, int height, uchar* image)
 	{
 		int idx = (j * width + i) * 3;
 
+        double real = Xmin + deltaX * i; //real number
+        double imag = Ymin + deltaY * j; //imaginary number
+        
+        thrust::complex<double> z(real, imag);
+
+        uchar grey = MandelbrotIteration(z, iter, thresh, degree);
+
+        //uchar grey = i;
+
         //los floats se convierten en uchar de forma implicita.
-        image[idx] = 255; //Blue
-        image[idx + 1] = 0; //Green
-        image[idx + 2] = 128; //Red
+        image[idx] = grey; //Blue
+        image[idx + 1] = grey; //Green
+        image[idx + 2] = grey; //Red
 	}
 }
 
 int main()
 {
-    int width = 1000, height = 500;
-    int pixelSize = width * height;
+    int k = 1;
+    int M = floor(513 * k), N = floor(1024 * k);
+
+    double Ymin = -1.1f, Ymax = 1.1f;
+    double Xmin = -2.6; //Xmax is calculated with the ratio N/M
+
+    int iter = 100;
+    
+    float thresh = 2;
+
+    float degree = 2;
 
     // Add vectors in parallel.
-    cudaError_t cudaStatus = addWithCuda(width, height);
+    cudaError_t cudaStatus = mandelbrotWithCuda(N, M, Ymin, Ymax, Xmin, iter, thresh, degree);
     if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "addWithCuda failed!");
+        fprintf(stderr, "mandelbrotWithCuda failed!");
         return 1;
     }
 
@@ -61,11 +121,23 @@ int main()
 }
 
 // Helper function for using CUDA to add vectors in parallel.
-cudaError_t addWithCuda(int width, int height)
+cudaError_t mandelbrotWithCuda(
+    int width, int height,
+    double Ymin, double Ymax, double Xmin,
+    int iter, int thresh,
+    float degree
+)
 {
     int pixelSize = width * height;
+    
+    double ratio = (double)width / (double)height;
+
+    double Xmax = Xmin + (Ymax - Ymin) * ratio;
 
     uchar* img_dev;
+
+    double deltaX = (Xmax - Xmin) / (double)width;
+    double deltaY = (Ymax - Ymin) / (double)height;
 
     cudaError_t cudaStatus;
 
@@ -94,7 +166,10 @@ cudaError_t addWithCuda(int width, int height)
     dim3 blocks(ceil((float)width / (float)threads.x), ceil((float)height / (float)threads.y));
 
     // Launch a kernel on the GPU with one thread for each element.
-    myKernel <<<blocks, threads>>>(width, height, img_dev);
+    myKernel <<<blocks, threads>>>
+    (
+        img_dev, width, height, deltaX, deltaY, Xmin, Ymin, iter, thresh, degree
+    );
 
     // Check for any errors launching the kernel
     cudaStatus = cudaGetLastError();
