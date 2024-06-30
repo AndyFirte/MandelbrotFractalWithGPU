@@ -2,12 +2,15 @@
   
   D:\Git\MandelbrotFractalWithGPU\MandelbrotFractalWithGPU>"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.2\bin\nvcc.exe" -gencode=arch=compute_52,code=\"sm_52,compute_52\" --use-local-env -ccbin "D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.37.32822\bin\HostX64\x64" -x cu   -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.2\include" -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.2\include"  -G   --keep-dir x64\Debug  -maxrregcount=0   --machine 64 --compile -cudart static  -g  -DWIN32 -DWIN64 -D_DEBUG -D_CONSOLE -D_MBCS -Xcompiler "/EHsc /W3 /nologo /Od /FS /Zi /RTC1 /MDd " -Xcompiler "/Fdx64\Debug\vc143.pdb" -o D:\Git\MandelbrotFractalWithGPU\MandelbrotFractalWithGPU\x64\Debug\kernel.cu.obj "D:\Git\MandelbrotFractalWithGPU\MandelbrotFractalWithGPU\kernel.cu" 
   kernel.cu
-  tmpxft_00006e10_00000000-7_kernel.cudafe1.cpp
-D:\Git\MandelbrotFractalWithGPU\MandelbrotFractalWithGPU\kernel.cu(112): warning C4244: 'inicializando': conversión de 'double' a 'int'; posible pérdida de datos
-D:\Git\MandelbrotFractalWithGPU\MandelbrotFractalWithGPU\kernel.cu(112): warning C4244: 'inicializando': conversión de 'double' a 'int'; posible pérdida de datos
-D:\Git\MandelbrotFractalWithGPU\MandelbrotFractalWithGPU\kernel.cu(126): warning C4244: '*=': conversión de 'double' a 'int'; posible pérdida de datos
-D:\Git\MandelbrotFractalWithGPU\MandelbrotFractalWithGPU\kernel.cu(138): warning C4244: 'argumento': conversión de 'float' a 'int'; posible pérdida de datos
-D:\Git\MandelbrotFractalWithGPU\MandelbrotFractalWithGPU\kernel.cu(202): warning C4244: 'argumento': conversión de 'float' a 'unsigned int'; posible pérdida de datos
-D:\Git\MandelbrotFractalWithGPU\MandelbrotFractalWithGPU\kernel.cu(202): warning C4244: 'argumento': conversión de 'float' a 'unsigned int'; posible pérdida de datos
-D:\Git\MandelbrotFractalWithGPU\MandelbrotFractalWithGPU\kernel.cu(208): warning C4244: 'argumento': conversión de 'int' a 'float'; posible pérdida de datos
+  tmpxft_0000211c_00000000-7_kernel.cudafe1.cpp
+D:\Git\MandelbrotFractalWithGPU\MandelbrotFractalWithGPU\kernel.cu(136): warning C4244: 'inicializando': conversión de 'double' a 'int'; posible pérdida de datos
+D:\Git\MandelbrotFractalWithGPU\MandelbrotFractalWithGPU\kernel.cu(136): warning C4244: 'inicializando': conversión de 'double' a 'int'; posible pérdida de datos
+D:\Git\MandelbrotFractalWithGPU\MandelbrotFractalWithGPU\kernel.cu(210): warning C4244: 'argumento': conversión de 'float' a 'int'; posible pérdida de datos
+D:\Git\MandelbrotFractalWithGPU\MandelbrotFractalWithGPU\kernel.cu(226): warning C4244: '=': conversión de 'double' a 'int'; posible pérdida de datos
+D:\Git\MandelbrotFractalWithGPU\MandelbrotFractalWithGPU\kernel.cu(227): warning C4244: '=': conversión de 'double' a 'float'; posible pérdida de datos
+D:\Git\MandelbrotFractalWithGPU\MandelbrotFractalWithGPU\kernel.cu(229): warning C4244: '=': conversión de 'double' a 'float'; posible pérdida de datos
+D:\Git\MandelbrotFractalWithGPU\MandelbrotFractalWithGPU\kernel.cu(231): warning C4244: 'argumento': conversión de 'float' a 'int'; posible pérdida de datos
+D:\Git\MandelbrotFractalWithGPU\MandelbrotFractalWithGPU\kernel.cu(322): warning C4244: 'argumento': conversión de 'float' a 'unsigned int'; posible pérdida de datos
+D:\Git\MandelbrotFractalWithGPU\MandelbrotFractalWithGPU\kernel.cu(322): warning C4244: 'argumento': conversión de 'float' a 'unsigned int'; posible pérdida de datos
+D:\Git\MandelbrotFractalWithGPU\MandelbrotFractalWithGPU\kernel.cu(325): warning C4244: 'argumento': conversión de 'int' a 'float'; posible pérdida de datos
   MandelbrotFractalWithGPU.vcxproj -> D:\Git\MandelbrotFractalWithGPU\x64\Debug\MandelbrotFractalWithGPU.exe

@@ -19,6 +19,8 @@
 #include <chrono>
 #include <iostream>
 
+#include <cmath> // for pow function
+
 using namespace std::chrono;
 
 using namespace std;
@@ -40,8 +42,32 @@ cudaError_t mandelbrotWithCuda
     int width, int height,
     double Ymin, double Ymax, double Xmin,
     int iter, int thresh,
-    float degree
+    float degree, 
+    cv::Mat* fractal_image,
+    bool isVideo
 );
+
+double exponentialRemap
+(
+    double x, double x_final,
+    double y_initial, double y_final, double y_limit
+)
+{
+    y_initial = y_initial - y_limit;
+    y_final = y_final - y_limit;
+    return y_initial * pow(y_final / y_initial, x / x_final) + y_limit;
+}
+
+double linearRemap
+(
+    double x, 
+    double x_initial, double x_final,
+    double y_initial, double y_final
+)
+{
+    double m = (y_final - y_initial) / (x_final / x_initial);
+    return m * (x - x_initial) + y_initial;
+}
 
 __device__ uchar MandelbrotIteration(thrust::complex<double> C, int iterations, float thresh, float degree)
 {
@@ -58,8 +84,6 @@ __device__ uchar MandelbrotIteration(thrust::complex<double> C, int iterations, 
             greyLevel = static_cast<uchar>(floor(255.0 - (255.0 * (i - 1) / iterations)));
             return greyLevel;
         }
-        /*
-        */
     }
     return 0;
 }
@@ -120,26 +144,108 @@ int main()
 
     float degree = 2;
 
+    bool isVideo;
+    bool repeatMainMenu = true;
 
+    while (repeatMainMenu) {
+        cout << "MENU:\n";
+        cout << "1: Render image\n";
+        cout << "2: Render video\n";
+        cout << "Select an option: ";
 
+        int choice;
+        cin >> choice;
+
+        switch (choice) {
+        case 1:
+            isVideo = false;
+            repeatMainMenu = false;
+            break;
+        case 2:
+            isVideo = true;
+            repeatMainMenu = false;
+            break;
+        default:
+            cout << "Not a valid option. Try again.\n\n";
+            break;
+        }
+    }
+
+    /*
     //Test parameters
     M = 1080; M *= 0.9;
     N = M;
 
-    Ymin =  0.00050;
-    Ymax =  0.00600;
-    Xmin = -1.77890;
 
-    iter = 300; thresh = 2;
+    Ymin =  0.00537518315;
+    Ymax =  0.00537518415;
+    Xmin = -1.7763135790;
 
+    iter = 35000; thresh = 2;
+    */
 
+    
+    cv::Mat fractal_image;
 
-    // Add vectors in parallel.
-    cudaError_t cudaStatus = mandelbrotWithCuda(N, M, Ymin, Ymax, Xmin, iter, thresh, degree);
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "mandelbrotWithCuda failed!");
-        return 1;
+    int FrameStart = 0, FrameEnd = 10;
+    double YminStart = Ymin, YminEnd = -0.7;
+    double YmaxStart = Ymax, YmaxEnd = 0.7;
+    double Y_limit = (YminEnd + YmaxEnd) / 2;
+
+    double XminStart = Xmin, XminEnd = -1.7;
+    double XmaxEnd = XminEnd + (YmaxEnd - YminEnd) * (double)N / (double)M;;
+    double X_limit = (XminEnd + XmaxEnd) / 2;
+
+    int iterStart = iter, iterEnd = 120;
+    float threshStart = thresh, threshEnd = 2;
+    float degreeStart = degree, degreeEnd = 2;
+
+    // Recording the timestamp at the start of the code
+    auto beg = high_resolution_clock::now();
+
+    cudaError_t cudaStatus;
+
+    if (!isVideo)
+    {
+        cudaStatus = mandelbrotWithCuda(N, M, Ymin, Ymax, Xmin, iter, thresh, degree, &fractal_image, isVideo);
+        if (cudaStatus != cudaSuccess) {
+            fprintf(stderr, "mandelbrotWithCuda failed!");
+            return 1;
+        }
     }
+    else
+    {
+        cout << "CREATING VIDEO";
+        for (int index = FrameStart; index <= FrameEnd; index++)
+        {
+            Ymin = exponentialRemap(index, FrameEnd, YminStart, YminEnd, Y_limit);
+            Ymax = exponentialRemap(index, FrameEnd, YmaxStart, YmaxEnd, Y_limit);
+
+            Xmin = exponentialRemap(index, FrameEnd, XminStart, XminEnd, X_limit);
+
+            iter = exponentialRemap(index, FrameEnd, iterStart, iterEnd, 0);
+            thresh = exponentialRemap(index, FrameEnd, threshStart, threshEnd, 0);
+
+            degree = linearRemap(index, FrameStart, FrameEnd, degreeStart, degreeEnd);
+
+            cudaStatus = mandelbrotWithCuda(N, M, Ymin, Ymax, Xmin, iter, thresh, degree, &fractal_image, isVideo);
+            if (cudaStatus != cudaSuccess) {
+                fprintf(stderr, "mandelbrotWithCuda failed!");
+                return 1;
+            }
+
+            std::ostringstream ss;
+            ss << "D:/Git/MandelbrotFractalWithGPU/VideoFrames/Video1/" 
+                << "Frame_" << index << ".png";
+            std::string filename = ss.str();
+            bool result = cv::imwrite(filename, fractal_image);
+            if (result)
+                std::cout << "La imagen se guardó correctamente." << std::endl;
+            else
+                std::cerr << "Error al guardar la imagen." << std::endl;
+        }
+    }
+
 
     // cudaDeviceReset must be called before exiting in order for profiling and
     // tracing tools such as Nsight and Visual Profiler to show complete traces.
@@ -149,6 +255,18 @@ int main()
         return 1;
     }
 
+    // Taking a timestamp after the code is ran
+    auto end = high_resolution_clock::now();
+
+    auto duration = duration_cast<milliseconds>(end - beg);
+
+    cv::imshow("salida", fractal_image);
+
+    // Displaying the elapsed time
+    std::cout << "\nElapsed Time: " << duration.count() << " miliseconds.\n\n\n";
+
+    cv::waitKey(0);
+
     return 0;
 }
 
@@ -157,7 +275,9 @@ cudaError_t mandelbrotWithCuda(
     int width, int height,
     double Ymin, double Ymax, double Xmin,
     int iter, int thresh,
-    float degree
+    float degree,
+    cv::Mat* fractal_image,
+    bool isVideo
 )
 {
     double Yaux = Ymin; //This mirrors the image in the y axis
@@ -201,9 +321,6 @@ cudaError_t mandelbrotWithCuda(
     dim3 threads(16, 16); // = 256 pixels
     dim3 blocks(ceil((float)width / (float)threads.x), ceil((float)height / (float)threads.y));
 
-    // Recording the timestamp at the start of the code
-    auto beg = high_resolution_clock::now();
-
     // Launch a kernel on the GPU with one thread for each element.
     myKernel <<<blocks, threads>>>
     (
@@ -217,7 +334,8 @@ cudaError_t mandelbrotWithCuda(
     }
     else
     {
-        fprintf(stderr, "\nSUCCESS in cudaGetLastError\n");
+        if (!isVideo)
+            fprintf(stderr, "\nSUCCESS in cudaGetLastError\n");
     }
     
     // cudaDeviceSynchronize waits for the kernel to finish, and returns
@@ -228,16 +346,9 @@ cudaError_t mandelbrotWithCuda(
     }
     else
     {
-        fprintf(stderr, "\nSUCCESS in cudaDeviceSynchronize\n\n");
+        if (!isVideo)
+            fprintf(stderr, "\nSUCCESS in cudaDeviceSynchronize\n\n");
     }
-
-    // Taking a timestamp after the code is ran
-    auto end = high_resolution_clock::now();
-
-    auto duration = duration_cast<milliseconds>(end - beg);
-
-    // Displaying the elapsed time
-    std::cout << "\nElapsed Time: " << duration.count() << " miliseconds.\n\n\n";
 
 
     //openCV image. Use CV_8U if it's in grayscale
@@ -247,13 +358,7 @@ cudaError_t mandelbrotWithCuda(
     cudaMemcpy(frame.data, img_dev, pixelSize * sizeof(uchar) * 3, cudaMemcpyDeviceToHost);
     //cudaMemcpy(frame.ptr(), img_dev, pixelSize * sizeof(uchar) * 3, cudaMemcpyDeviceToHost); //alternative
 
-    cv::Mat img_color;
-
-    cv::applyColorMap(frame, img_color, cv::COLORMAP_HOT);
-
-    cv::imshow("salida", img_color);
-
-    cv::waitKey(0);
+    cv::applyColorMap(frame, *fractal_image, cv::COLORMAP_HOT);
 
     return cudaStatus;
 }
