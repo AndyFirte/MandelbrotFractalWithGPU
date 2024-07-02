@@ -390,6 +390,7 @@ D:\andre\Down\opencv\build\include\opencv2\imgproc.hpp
 D:\andre\Down\opencv\build\include\opencv2\imgproc\segmentation.hpp
 D:\andre\Down\opencv\build\include\opencv2\opencv_modules.hpp
 D:\andre\Down\opencv\build\include\opencv2\videoio.hpp
+D:\Git\MandelbrotFractalWithGPU\MandelbrotFractalWithGPU\Remappers.h
 D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.37.32822\include\algorithm
 D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.37.32822\include\ammintrin.h
 D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.37.32822\include\array
@@ -420,6 +421,7 @@ D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.37.3282
 D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.37.32822\include\intrin.h
 D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.37.32822\include\intrin0.h
 D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.37.32822\include\intrin0.inl.h
+D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.37.32822\include\iomanip
 D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.37.32822\include\ios
 D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.37.32822\include\iosfwd
 D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.37.32822\include\iostream
@@ -470,7 +472,9 @@ D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.37.3282
 D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.37.32822\include\xkeycheck.h
 D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.37.32822\include\xlocale
 D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.37.32822\include\xlocinfo
+D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.37.32822\include\xlocmon
 D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.37.32822\include\xlocnum
+D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.37.32822\include\xloctime
 D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.37.32822\include\xmemory
 D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.37.32822\include\xmmintrin.h
 D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.37.32822\include\xstring

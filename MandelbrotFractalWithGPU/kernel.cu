@@ -19,7 +19,13 @@
 #include <chrono>
 #include <iostream>
 
+
+
 #include <cmath> // for pow function
+
+#include <iomanip> // For std::setprecision
+
+#include "Remappers.h"
 
 using namespace std::chrono;
 
@@ -40,34 +46,13 @@ using cmplxDouble = complex<double>;
 cudaError_t mandelbrotWithCuda
 (
     int width, int height,
-    double Ymin, double Ymax, double Xmin,
+    double Ymin, double Ymax, double Xmin, double Xmax,
     int iter, int thresh,
     float degree, 
     cv::Mat* fractal_image,
     bool isVideo
 );
 
-double exponentialRemap
-(
-    double x, double x_final,
-    double y_initial, double y_final, double y_limit
-)
-{
-    y_initial = y_initial - y_limit;
-    y_final = y_final - y_limit;
-    return y_initial * pow(y_final / y_initial, x / x_final) + y_limit;
-}
-
-double linearRemap
-(
-    double x, 
-    double x_initial, double x_final,
-    double y_initial, double y_final
-)
-{
-    double m = (y_final - y_initial) / (x_final / x_initial);
-    return m * (x - x_initial) + y_initial;
-}
 
 __device__ uchar MandelbrotIteration(thrust::complex<double> C, int iterations, float thresh, float degree)
 {
@@ -132,11 +117,13 @@ __global__ void myKernel
 
 int main()
 {
-    int k = 1;
-    int M = floor(513 * k), N = floor(1024 * k);
+    float k = 0.9f;
+    int M = floor(1080 * k), N = floor(1080 * k);
+    double ratio = (double)N / (double)M;
 
-    double Ymin = -1.1f, Ymax = 1.1f;
-    double Xmin = -2.6; //Xmax is calculated with the ratio N/M
+    double Ymin = -1.7, Ymax = 1.7;
+    double Xmin = -2.4;
+    double Xmax = Xmin + (Ymax - Ymin) * ratio;
 
     int iter = 100;
     
@@ -147,27 +134,35 @@ int main()
     bool isVideo;
     bool repeatMainMenu = true;
 
-    while (repeatMainMenu) {
+    int choice;
+    while (repeatMainMenu) 
+    {
         cout << "MENU:\n";
         cout << "1: Render image\n";
         cout << "2: Render video\n";
         cout << "Select an option: ";
 
-        int choice;
         cin >> choice;
 
-        switch (choice) {
-        case 1:
-            isVideo = false;
-            repeatMainMenu = false;
-            break;
-        case 2:
-            isVideo = true;
-            repeatMainMenu = false;
-            break;
-        default:
-            cout << "Not a valid option. Try again.\n\n";
-            break;
+        switch (choice) 
+        {
+            case 1:
+            {
+                isVideo = false;
+                repeatMainMenu = false;
+                break;
+            }
+            case 2:
+            {
+                isVideo = true;
+                repeatMainMenu = false;
+                break;
+            }
+            default:
+            {
+                cout << "Not a valid option. Try again.\n\n";
+                break;
+            }
         }
     }
 
@@ -180,42 +175,249 @@ int main()
     Ymin =  0.00537518315;
     Ymax =  0.00537518415;
     Xmin = -1.7763135790;
+    
+    ratio = (double)N / (double)M;
+
+    Xmax = Xmin + (Ymax - Ymin) * ratio;
 
     iter = 35000; thresh = 2;
+
+    PARAMETERS:
+
+    Size:
+            Width: 972
+            Height: 972
+
+    Y coordinates:
+            Y min: 0.003582497250219543
+            Y max: 0.003582498269241166
+
+    X coordinates:
+            X min: -1.477394606418177
+            X max: -1.477394605399155
+
+    Other parameters:
+            Iterations: 32500
+            Threshold: 2
+            Degree: 2
     */
 
     
     cv::Mat fractal_image;
 
-    int FrameStart = 0, FrameEnd = 10;
-    double YminStart = Ymin, YminEnd = -0.7;
-    double YmaxStart = Ymax, YmaxEnd = 0.7;
+    int FrameStart = 0, FrameEnd = 1680; //56 seconds at 30fps
+    double YminStart = Ymin, YminEnd = 0.00537518315;
+    double YmaxStart = Ymax, YmaxEnd = 0.00537518415;
     double Y_limit = (YminEnd + YmaxEnd) / 2;
 
-    double XminStart = Xmin, XminEnd = -1.7;
-    double XmaxEnd = XminEnd + (YmaxEnd - YminEnd) * (double)N / (double)M;;
+    double XminStart = Xmin, XminEnd = -1.7763135790;
+    double XmaxEnd = XminEnd + (YmaxEnd - YminEnd) * ratio;
     double X_limit = (XminEnd + XmaxEnd) / 2;
 
-    int iterStart = iter, iterEnd = 120;
+    int iterStart = iter, iterEnd = 35000;
     float threshStart = thresh, threshEnd = 2;
     float degreeStart = degree, degreeEnd = 2;
 
-    // Recording the timestamp at the start of the code
-    auto beg = high_resolution_clock::now();
 
     cudaError_t cudaStatus;
 
     if (!isVideo)
     {
-        cudaStatus = mandelbrotWithCuda(N, M, Ymin, Ymax, Xmin, iter, thresh, degree, &fractal_image, isVideo);
-        if (cudaStatus != cudaSuccess) {
-            fprintf(stderr, "mandelbrotWithCuda failed!");
-            return 1;
+        bool exploringFractal = true;
+
+        float zoomFactor = 6.0f;
+        float shiftFactor = 6.0f;
+
+        while (exploringFractal)
+        {
+            // Recording the timestamp at the start of the code
+            auto beg = high_resolution_clock::now();
+
+            cudaStatus = mandelbrotWithCuda(N, M, Ymin, Ymax, Xmin, Xmax, iter, thresh, degree, &fractal_image, isVideo);
+            if (cudaStatus != cudaSuccess) {
+                fprintf(stderr, "mandelbrotWithCuda failed!");
+                return 1;
+            }
+            cv::imshow("salida", fractal_image);
+
+            // Taking a timestamp after the code is ran
+            auto end = high_resolution_clock::now();
+
+            auto duration = duration_cast<milliseconds>(end - beg);
+
+            system("cls");
+
+            // Displaying the elapsed time
+            cout << "\nElapsed Time: " << duration.count() << " miliseconds.\n";
+
+            cout << "\nPARAMETERS:\n";
+
+            cout << "\nSize:\n";
+            cout << "\tWidth: " << N << endl;
+            cout << "\tHeight: " << M << endl;
+            cout << "\nY coordinates:\n";
+            cout << "\tY min: " << setprecision(numeric_limits<double>::digits10 + 1) << Ymin << endl;
+            cout << "\tY max: " << setprecision(numeric_limits<double>::digits10 + 1) << Ymax << endl;
+            cout << "\nX coordinates:\n";
+            cout << "\tX min: " << setprecision(numeric_limits<double>::digits10 + 1) << Xmin << endl;
+            cout << "\tX max: " << setprecision(numeric_limits<double>::digits10 + 1) << Xmax << endl;
+            cout << "\nOther parameters:\n";
+            cout << "\tIterations: " << setprecision(numeric_limits<double>::digits10 + 1) << iter << endl;
+            cout << "\tThreshold: " << setprecision(numeric_limits<double>::digits10 + 1) << thresh << endl;
+            cout << "\tDegree: " << setprecision(numeric_limits<double>::digits10 + 1) << degree << endl;
+            
+            bool repeatExplorerMenu = true;
+            while (repeatExplorerMenu)
+            {
+                cout << "\nEXPLORER MENU:" << endl;
+                cout << "\n1: Zoom in" << endl;
+                cout << "2: Zoom out" << endl;
+                cout << "3: Modify zoom factor (current: " << zoomFactor << ")" << endl;
+                cout << "\n4: Shift up" << endl;
+                cout << "5: Shift down" << endl;
+                cout << "6: Shift left" << endl;
+                cout << "7: Shift right" << endl;
+                cout << "8: Modify shift factor (current: " << shiftFactor << ")" << endl;
+                cout << "\n9: Increase/decrease degree" << endl;
+                cout << "10: Increase/decrease threshold" << endl;
+                cout << "11: Increase/decrease iterations" << endl;
+                cout << "12: Display again" << endl;
+                cout << "\n0: Exit" << endl;
+                cout << "\n\tSelect an option (close image window first): ";
+                cv::waitKey(0);
+
+                cin >> choice;
+
+                repeatExplorerMenu = false;
+
+                switch (choice) 
+                {
+                    case 0: // Exit
+                    {
+                        exploringFractal = false;
+                        break;
+                    }
+                    case 1: // Zoom in
+                    {
+                        double deltaY = Ymax - Ymin;
+                        Ymin += deltaY / zoomFactor;
+                        Ymax -= deltaY / zoomFactor;
+
+                        double deltaX = Xmax - Xmin;
+                        Xmin += deltaX / zoomFactor;
+                        Xmax = Xmin + (Ymax - Ymin) * ratio;
+                        break;
+                    }
+                    case 2: // Zoom out
+                    {
+                        double deltaY = Ymax - Ymin;
+                        Ymin -= deltaY / (zoomFactor - 2);
+                        Ymax += deltaY / (zoomFactor - 2);
+
+                        double deltaX = Xmax - Xmin;
+                        Xmin -= deltaX / (zoomFactor - 2);
+                        Xmax = Xmin + (Ymax - Ymin) * ratio;
+                        break;
+                    }
+                    case 3: // Modify zoom factor
+                    {
+                        cout << "\nChoose a zoom factor." << endl;
+                        cout << "It's recommended to pick a number between 3 (strong) and 10 (weak)." << endl;
+                        cout << "Current zoom factor: " << zoomFactor << "." << endl;
+                        cout << "New zoom factor: ";
+                        cin >> zoomFactor;
+                        repeatExplorerMenu = true;
+                        break;
+                    }
+                    case 4: // Shift up
+                    {
+                        double deltaY = Ymax - Ymin;
+                        Ymin += deltaY / shiftFactor;
+                        Ymax += deltaY / shiftFactor;
+                        break;
+                    }
+                    case 5: // Shift down
+                    {
+                        double deltaY = Ymax - Ymin;
+                        Ymin -= deltaY / shiftFactor;
+                        Ymax -= deltaY / shiftFactor;
+                        break;
+                    }
+                    case 6: // Shift left
+                    {
+                        double deltaX = Xmax - Xmin;
+                        Xmin -= deltaX / shiftFactor;
+                        Xmax -= deltaX / shiftFactor;
+                        break;
+                    }
+                    case 7: // Shift right
+                    {
+                        double deltaX = Xmax - Xmin;
+                        Xmin += deltaX / shiftFactor;
+                        Xmax += deltaX / shiftFactor;
+                        break;
+                    }
+                    case 8: // Modify shift factor
+                    {
+                        cout << "\nChoose a shift factor." << endl;
+                        cout << "It's recommended to pick a number between 3 (strong) and 10 (weak)." << endl;
+                        cout << "Current zoom factor: " << shiftFactor << "." << endl;
+                        cout << "New shift factor: ";
+                        cin >> shiftFactor;
+                        repeatExplorerMenu = true;
+                        break;
+                    }
+                    case 9: // Increment/decrement degree
+                    {
+                        float degreeIncrement;
+                        cout << "\nChoose an increment or decrement for the degree." << endl;
+                        cout << "Use positive numbers for increments, negative for decrements." << endl;
+                        cout << "Current degree: " << degree << "." << endl;
+                        cout << "Increment by: ";
+                        cin >> degreeIncrement;
+                        degree += degreeIncrement;
+                        break;
+                    }
+                    case 10: // Increment/decrement threshold
+                    {
+                        float threshIncrement;
+                        cout << "\nChoose an increment or decrement for the threshold." << endl;
+                        cout << "Use positive numbers for increments, negative for decrements." << endl;
+                        cout << "Current threshold: " << thresh << "." << endl;
+                        cout << "Increment by: ";
+                        cin >> threshIncrement;
+                        thresh += threshIncrement;
+                        break;
+                    }
+                    case 11: // Increment/decrement threshold
+                    {
+                        int iterIncrement;
+                        cout << "\nChoose an increment or decrement for the iterations." << endl;
+                        cout << "Use positive integer numbers for increments, negative for decrements." << endl;
+                        cout << "Current iterations: " << iter << "." << endl;
+                        cout << "Increment by: ";
+                        cin >> iterIncrement;
+                        iter += iterIncrement;
+                        break;
+                    }
+                    case 12: // Display again
+                    {
+                        break;
+                    }
+                    default:
+                    {
+                        repeatExplorerMenu = true;
+                        cout << "Not a valid option. Try again.\n\n";
+                        break;
+                    }
+                }
+
+            }
         }
     }
     else
     {
-        cout << "CREATING VIDEO";
+        cout << "\nCREATING VIDEO\n\n";
         for (int index = FrameStart; index <= FrameEnd; index++)
         {
             Ymin = exponentialRemap(index, FrameEnd, YminStart, YminEnd, Y_limit);
@@ -228,21 +430,24 @@ int main()
 
             degree = linearRemap(index, FrameStart, FrameEnd, degreeStart, degreeEnd);
 
-            cudaStatus = mandelbrotWithCuda(N, M, Ymin, Ymax, Xmin, iter, thresh, degree, &fractal_image, isVideo);
+            cudaStatus = mandelbrotWithCuda(N, M, Ymin, Ymax, Xmin, Xmax, iter, thresh, degree, &fractal_image, isVideo);
             if (cudaStatus != cudaSuccess) {
                 fprintf(stderr, "mandelbrotWithCuda failed!");
                 return 1;
             }
 
             std::ostringstream ss;
-            ss << "D:/Git/MandelbrotFractalWithGPU/VideoFrames/Video1/" 
+            ss << "D:/Git/MandelbrotFractalWithGPU/VideoFrames/Video3/" 
                 << "Frame_" << index << ".png";
             std::string filename = ss.str();
             bool result = cv::imwrite(filename, fractal_image);
             if (result)
-                std::cout << "La imagen se guardó correctamente." << std::endl;
+                cout << "Image " << index << " saved..." << endl;
             else
-                std::cerr << "Error al guardar la imagen." << std::endl;
+            {
+                cerr << "\nError while saving image." << endl; 
+                return 0;
+            }
         }
     }
 
@@ -255,25 +460,13 @@ int main()
         return 1;
     }
 
-    // Taking a timestamp after the code is ran
-    auto end = high_resolution_clock::now();
-
-    auto duration = duration_cast<milliseconds>(end - beg);
-
-    cv::imshow("salida", fractal_image);
-
-    // Displaying the elapsed time
-    std::cout << "\nElapsed Time: " << duration.count() << " miliseconds.\n\n\n";
-
-    cv::waitKey(0);
-
     return 0;
 }
 
 // Helper function for using CUDA to add vectors in parallel.
 cudaError_t mandelbrotWithCuda(
     int width, int height,
-    double Ymin, double Ymax, double Xmin,
+    double Ymin, double Ymax, double Xmin, double Xmax,
     int iter, int thresh,
     float degree,
     cv::Mat* fractal_image,
@@ -285,10 +478,6 @@ cudaError_t mandelbrotWithCuda(
     Ymax = -Yaux;
 
     int pixelSize = width * height;
-    
-    double ratio = (double)width / (double)height;
-
-    double Xmax = Xmin + (Ymax - Ymin) * ratio;
 
     uchar* img_dev;
 
