@@ -117,7 +117,7 @@ __global__ void myKernel
 
 int main()
 {
-    float k = 0.9f;
+    float k = 1.0;
     int M = floor(1080 * k), N = floor(1080 * k);
     double ratio = (double)N / (double)M;
 
@@ -130,6 +130,41 @@ int main()
     float thresh = 2;
 
     float degree = 2;
+    
+
+    /*
+    double Ymin = 0.6859665904057353, Ymax = 0.9442179710300161;
+    double Xmin = -0.3671721196466123;
+    double Xmax = Xmin + (Ymax - Ymin) * ratio;
+
+    int iter = 200;
+
+    float thresh = 2;
+
+    float degree = 2;
+    */
+
+
+    /*
+    Size:
+        Width: 918
+        Height: 918
+
+    Y coordinates:
+            Y min: 0.6859665904057353
+            Y max: 0.9442179710300161
+
+    X coordinates:
+            X min: -0.3671721196466123
+            X max: -0.1089207390223315
+
+    Other parameters:
+            Iterations: 200
+            Threshold: 2
+            Degree: 3
+    */
+
+
 
     bool isVideo;
     bool repeatMainMenu = true;
@@ -200,21 +235,55 @@ int main()
             Iterations: 32500
             Threshold: 2
             Degree: 2
+
+
+
+    Y coordinates:
+        Y min: 0.6501447249932832
+        Y max: 0.6501447264294704
+
+X coordinates:
+        X min: -0.1690813995583467
+        X max: -0.1690813981221595
+
+Other parameters:
+        Iterations: 100000
+        Threshold: 2
+        Degree: 2
+
+
+
+        Size:
+        Width: 864
+        Height: 864
+
+        Y coordinates:
+                Y min: 0.6550759647997856
+                Y max: 0.6551523281769799
+
+        X coordinates:
+                X min: -0.1609347246595099
+                X max: -0.1608583612823156
+
+        Other parameters:
+                Iterations: 4000
+                Threshold: 2
+                Degree: 2
     */
 
     
     cv::Mat fractal_image;
 
     int FrameStart = 0, FrameEnd = 1680; //56 seconds at 30fps
-    double YminStart = Ymin, YminEnd = 0.00537518315;
-    double YmaxStart = Ymax, YmaxEnd = 0.00537518415;
+    double YminStart = Ymin, YminEnd = 0.6501447249932832;
+    double YmaxStart = Ymax, YmaxEnd = 0.6501447264294704;
     double Y_limit = (YminEnd + YmaxEnd) / 2;
 
-    double XminStart = Xmin, XminEnd = -1.7763135790;
+    double XminStart = Xmin, XminEnd = -0.1690813995583467;
     double XmaxEnd = XminEnd + (YmaxEnd - YminEnd) * ratio;
     double X_limit = (XminEnd + XmaxEnd) / 2;
 
-    int iterStart = iter, iterEnd = 35000;
+    int iterStart = iter, iterEnd = 100000;
     float threshStart = thresh, threshEnd = 2;
     float degreeStart = degree, degreeEnd = 2;
 
@@ -361,7 +430,7 @@ int main()
                     {
                         cout << "\nChoose a shift factor." << endl;
                         cout << "It's recommended to pick a number between 3 (strong) and 10 (weak)." << endl;
-                        cout << "Current zoom factor: " << shiftFactor << "." << endl;
+                        cout << "Current shift factor: " << shiftFactor << "." << endl;
                         cout << "New shift factor: ";
                         cin >> shiftFactor;
                         repeatExplorerMenu = true;
@@ -424,11 +493,14 @@ int main()
             Ymax = exponentialRemap(index, FrameEnd, YmaxStart, YmaxEnd, Y_limit);
 
             Xmin = exponentialRemap(index, FrameEnd, XminStart, XminEnd, X_limit);
+            Xmax = Xmin + (Ymax - Ymin) * ratio;
 
-            iter = exponentialRemap(index, FrameEnd, iterStart, iterEnd, 0);
+            //iter = exponentialRemap(index, FrameEnd, iterStart, iterEnd, 0);
+            iter = expolinearRemap(index, 0, FrameEnd, iterStart, iterEnd, 0, 0.1); //0.1 en video5
+            //iter = linearRemap(index, 0, FrameEnd, iterStart, iterEnd);
             thresh = exponentialRemap(index, FrameEnd, threshStart, threshEnd, 0);
 
-            degree = linearRemap(index, FrameStart, FrameEnd, degreeStart, degreeEnd);
+            degree = linearRemap(index, 0, FrameEnd, degreeStart, degreeEnd);
 
             cudaStatus = mandelbrotWithCuda(N, M, Ymin, Ymax, Xmin, Xmax, iter, thresh, degree, &fractal_image, isVideo);
             if (cudaStatus != cudaSuccess) {
@@ -437,12 +509,12 @@ int main()
             }
 
             std::ostringstream ss;
-            ss << "D:/Git/MandelbrotFractalWithGPU/VideoFrames/Video3/" 
+            ss << "D:/Git/MandelbrotFractalWithGPU/VideoFrames/Video8/" 
                 << "Frame_" << index << ".png";
             std::string filename = ss.str();
             bool result = cv::imwrite(filename, fractal_image);
             if (result)
-                cout << "Image " << index << " saved..." << endl;
+                cout << "Image " << index << " with " << iter << " iterations saved..." << endl;
             else
             {
                 cerr << "\nError while saving image." << endl; 

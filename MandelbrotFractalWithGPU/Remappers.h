@@ -13,4 +13,11 @@ double linearRemap
     double y_initial, double y_final
 );
 
+double expolinearRemap(
+    double x,
+    double x_initial, double x_final,
+    double y_initial, double y_final, double y_limit,
+    double linearBias
+);
+
 #endif
